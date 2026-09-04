@@ -53,6 +53,11 @@ public class EntityExplodeListener implements Listener {
     public void on(EntityExplodeEvent event) {
         if (!CreeperPlugin.instance().configManager().enabled()) return;
 
+        //if explosion type is BREEZE_WIND_CHARGE or WIND_CHARGE, do nothing
+        if (event.getEntity().getType().toString().equals("BREEZE_WIND_CHARGE") || event.getEntity().getType().toString().equals("WIND_CHARGE")) {
+            return;
+        }
+
         if (CreeperPlugin.instance().configManager().usePlugin(event)) {
             var blocks = new BlockList(event.blockList());
 
