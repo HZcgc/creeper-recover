@@ -34,7 +34,7 @@ plugin creates `plugins/CreeperRecover/config.json` automatically.
   "recover": {
     "recoverSpeed": 150,
     "recoverDelay": 5000,
-    "blockRecoverSound": "BLOCK.ROOTED_DIRT.PLACE",
+    "blockRecoverSound": "minecraft:block.rooted_dirt.place",
     "blockBlacklist": []
   },
   "target": [

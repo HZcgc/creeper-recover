@@ -44,9 +44,11 @@ import de.rafael.plugins.creeper.recover.common.CreeperPlugin;
 import de.rafael.plugins.creeper.recover.common.classes.enums.TargetTypes;
 import de.rafael.plugins.creeper.recover.common.utils.config.JsonConfiguration;
 import lombok.Getter;
+import net.kyori.adventure.key.Key;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Registry;
 import org.bukkit.Sound;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.entity.EntityExplodeEvent;
@@ -68,6 +70,7 @@ public class ConfigManager {
             "earth_nether",
             "earth_the_end"
     );
+    private static final String DEFAULT_BLOCK_RECOVER_SOUND = "minecraft:block.rooted_dirt.place";
 
     private int recoverSpeed = 3 /* to milliseconds */ * 50;
     private int recoverDelay = 20 * 5 /* to milliseconds */ * 50;
@@ -85,11 +88,7 @@ public class ConfigManager {
 
         this.blockBlacklist = new ArrayList<>();
 
-        try {
-            this.blockRecoverSound = Sound.valueOf("BLOCK_ROOTED_DIRT_PLACE");
-        } catch (Exception exception) {
-            this.blockRecoverSound = Sound.BLOCK_GRAVEL_PLACE;
-        }
+        this.blockRecoverSound = Sound.BLOCK_ROOTED_DIRT_PLACE;
 
         JsonConfiguration jsonConfiguration = JsonConfiguration.loadConfig(new File("plugins//CreeperRecover/"), "config.json");
 
@@ -158,12 +157,12 @@ public class ConfigManager {
             this.recoverDelay = jsonConfiguration.jsonObject().getAsJsonObject("recover").get("recoverDelay").getAsInt();
         }
         if (!jsonConfiguration.jsonObject().getAsJsonObject("recover").has("blockRecoverSound")) {
-            jsonConfiguration.jsonObject().getAsJsonObject("recover").addProperty("blockRecoverSound", this.blockRecoverSound.name());
+            jsonConfiguration.jsonObject().getAsJsonObject("recover").addProperty("blockRecoverSound", DEFAULT_BLOCK_RECOVER_SOUND);
             jsonConfiguration.saveConfig();
 
             return false;
         } else {
-            this.blockRecoverSound = Sound.valueOf(jsonConfiguration.jsonObject().getAsJsonObject("recover").get("blockRecoverSound").getAsString());
+            this.blockRecoverSound = resolveSound(jsonConfiguration.jsonObject().getAsJsonObject("recover").get("blockRecoverSound").getAsString());
         }
         if (!jsonConfiguration.jsonObject().getAsJsonObject("recover").has("blockBlacklist")) {
             jsonConfiguration.jsonObject().getAsJsonObject("recover").add("blockBlacklist", GSON.toJsonTree(this.blockBlacklist, new TypeToken<List<Material>>() {
@@ -343,6 +342,13 @@ public class ConfigManager {
             JsonConfiguration jsonConfiguration = JsonConfiguration.loadConfig(configFolder, configFileName);
             jsonConfiguration.jsonObject().addProperty("configVersion", to);
 
+            JsonObject plugin = jsonConfiguration.jsonObject().has("plugin")
+                    ? jsonConfiguration.jsonObject().getAsJsonObject("plugin")
+                    : new JsonObject();
+            plugin.addProperty("bStats", false);
+            plugin.addProperty("ignoreUpdates", true);
+            jsonConfiguration.jsonObject().add("plugin", plugin);
+
             JsonArray targets = jsonConfiguration.jsonObject().has("target")
                     ? jsonConfiguration.jsonObject().getAsJsonArray("target")
                     : new JsonArray();
@@ -392,6 +398,20 @@ public class ConfigManager {
         entityTypes.add(EntityType.CREEPER.name());
         entityTarget.add("entityTypes", entityTypes);
         return entityTarget;
+    }
+
+    private Sound resolveSound(String configuredSound) {
+        if (configuredSound.equalsIgnoreCase("BLOCK_ROOTED_DIRT_PLACE")
+                || configuredSound.equalsIgnoreCase("BLOCK.ROOTED_DIRT.PLACE")) {
+            return Sound.BLOCK_ROOTED_DIRT_PLACE;
+        }
+
+        try {
+            Sound sound = Registry.SOUND_EVENT.get(Key.key(configuredSound));
+            return sound != null ? sound : Sound.BLOCK_GRAVEL_PLACE;
+        } catch (IllegalArgumentException ignored) {
+            return Sound.BLOCK_GRAVEL_PLACE;
+        }
     }
 
 }
