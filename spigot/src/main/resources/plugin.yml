@@ -1,5 +1,5 @@
 name: "CreeperRecover"
-version: "1.2.0"
+version: "1.2.1"
 main: "de.rafael.plugins.creeper.recover.CreeperRecover"
 api-version: "26.2"
 description: "Silently restores Creeper damage in configured worlds"

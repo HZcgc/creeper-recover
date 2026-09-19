@@ -48,6 +48,7 @@ import de.rafael.plugins.creeper.recover.common.utils.MathUtils;
 import lombok.Getter;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
 import org.bukkit.block.Sign;
@@ -56,7 +57,9 @@ import org.bukkit.block.sign.SignSide;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.TNTPrimed;
 import org.bukkit.inventory.DoubleChestInventory;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -80,44 +83,54 @@ public class Explosion {
                 return;
             }
             ExplodedBlock explodedBlock = new ExplodedBlock(block.getLocation().clone(), block.getType(), block.getBlockData().clone());
-            if (block.getState() instanceof InventoryHolder holder) {
+            BlockState state = block.getState();
+            Inventory inventoryToClear = null;
+            if (state instanceof InventoryHolder holder) {
+                Inventory holderInventory = holder.getInventory();
                 InventoryItems inventory = new InventoryItems();
-                for (int i = 0; i < holder.getInventory().getStorageContents().length; i++) {
-                    if (holder.getInventory().getStorageContents()[i] != null) {
-                        inventory.set(i, holder.getInventory().getStorageContents()[i].clone());
+                ItemStack[] contents = holderInventory.getStorageContents();
+                for (int i = 0; i < contents.length; i++) {
+                    if (contents[i] != null) {
+                        inventory.set(i, contents[i].clone());
                     }
                 }
                 explodedBlock.addData(inventory);
+                inventoryToClear = holderInventory;
             }
-            if (block.getState() instanceof Chest chest) {
+            if (state instanceof Chest chest) {
                 if (chest.getInventory() instanceof DoubleChestInventory doubleChestInventory) {
                     DoubleChest doubleChest = doubleChestInventory.getHolder();
-
-                    assert doubleChest != null;
-                    Chest leftSide = (Chest) doubleChest.getLeftSide();
-                    Chest rightSide = (Chest) doubleChest.getRightSide();
-                    assert leftSide != null;
-                    assert rightSide != null;
-                    if (block.equals(leftSide.getBlock())) {
-                        add.accept(rightSide.getBlock());
-                        ignore.accept(rightSide.getBlock());
-                        ExplodedBlock extraChest = new ExplodedBlock(rightSide.getBlock().getLocation().clone(), rightSide.getBlock().getType(), rightSide.getBlock().getBlockData().clone());
-                        explodedBlock.connectBlock(extraChest);
-                    } else if (block.equals(rightSide.getBlock())) {
-                        add.accept(leftSide.getBlock());
-                        ignore.accept(leftSide.getBlock());
-                        ExplodedBlock extraChest = new ExplodedBlock(leftSide.getBlock().getLocation().clone(), leftSide.getBlock().getType(), leftSide.getBlock().getBlockData().clone());
-                        explodedBlock.connectBlock(extraChest);
+                    if (doubleChest != null
+                            && doubleChest.getLeftSide() instanceof Chest leftSide
+                            && doubleChest.getRightSide() instanceof Chest rightSide) {
+                        if (block.equals(leftSide.getBlock())) {
+                            add.accept(rightSide.getBlock());
+                            ignore.accept(rightSide.getBlock());
+                            ExplodedBlock extraChest = new ExplodedBlock(rightSide.getBlock().getLocation().clone(), rightSide.getBlock().getType(), rightSide.getBlock().getBlockData().clone());
+                            explodedBlock.connectBlock(extraChest);
+                        } else if (block.equals(rightSide.getBlock())) {
+                            add.accept(leftSide.getBlock());
+                            ignore.accept(leftSide.getBlock());
+                            ExplodedBlock extraChest = new ExplodedBlock(leftSide.getBlock().getLocation().clone(), leftSide.getBlock().getType(), leftSide.getBlock().getBlockData().clone());
+                            explodedBlock.connectBlock(extraChest);
+                        }
                     }
                 }
             }
-            if (block.getState() instanceof Sign sign) {
+            if (state instanceof Sign sign) {
                 for (Side side : Side.values()) {
                     SignSide signSide = sign.getSide(side);
                     explodedBlock.addData(new SignLines(side, signSide.getLines()));
                     explodedBlock.addData(new SignStyle(side, signSide.getColor(), signSide.isGlowingText()));
                 }
                 explodedBlock.addData(new SignData(sign.isWaxed()));
+            }
+
+            // Removing a container block causes Minecraft to eject its contents.
+            // The cloned snapshot above is restored later, so clear the live
+            // inventory first to ensure every item exists exactly once.
+            if (inventoryToClear != null) {
+                inventoryToClear.clear();
             }
             explodedBlocks.add(explodedBlock);
         });

@@ -65,6 +65,7 @@ public class InventoryItems implements IBlockData {
     @Override
     public void apply(Block block, RecoverPhase phase) {
         if (phase == RecoverPhase.POST_STATE_UPDATE && block.getState() instanceof InventoryHolder holder) {
+            holder.getInventory().clear();
             for (Integer slot : items.keySet()) {
                 holder.getInventory().setItem(slot, items.get(slot).clone());
             }

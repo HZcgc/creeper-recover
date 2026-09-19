@@ -9,10 +9,10 @@ preconfigured for the Towny Reborn Earth worlds.
 - Creeper explosions only
 - enabled only in `earth`, `earth_nether` and `earth_the_end`
 - five-second delay before recovery starts
-- no explosion block drops, preventing duplicate items
+- container inventories never drop during recovery, preventing duplicate items
 - solid blocks placed during the delay are not overwritten
 
-Place `creeper-recover-1.2.0-spigot.jar` in `plugins/` and restart the server. The
+Place `creeper-recover-1.2.1-spigot.jar` in `plugins/` and restart the server. The
 plugin creates `plugins/CreeperRecover/config.json` automatically.
 
 # Images
