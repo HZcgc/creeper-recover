@@ -34,3 +34,11 @@ allprojects {
     group = findProperty("maven_group")!!
 
 }
+
+subprojects {
+    plugins.withId("java") {
+        extensions.configure<JavaPluginExtension> {
+            toolchain.languageVersion.set(JavaLanguageVersion.of(25))
+        }
+    }
+}

@@ -61,7 +61,13 @@ public class ConfigManager {
 
     public static final Gson GSON = new GsonBuilder().create();
 
-    public static final int latestConfigVersion = 2;
+    public static final int latestConfigVersion = 3;
+
+    private static final List<String> DEFAULT_WORLD_WHITELIST = List.of(
+            "earth",
+            "earth_nether",
+            "earth_the_end"
+    );
 
     private int recoverSpeed = 3 /* to milliseconds */ * 50;
     private int recoverDelay = 20 * 5 /* to milliseconds */ * 50;
@@ -70,8 +76,8 @@ public class ConfigManager {
     private List<Material> blockBlacklist;
 
     private boolean enabled = true;
-    private boolean bStats = true;
-    private boolean ignoreUpdates = false;
+    private boolean bStats = false;
+    private boolean ignoreUpdates = true;
 
     private List<JsonObject> targetList;
 
@@ -96,7 +102,7 @@ public class ConfigManager {
         } else {
             int currentConfigVersion = jsonConfiguration.jsonObject().get("configVersion").getAsInt();
             if (currentConfigVersion < latestConfigVersion) {
-                updateConfig(currentConfigVersion, latestConfigVersion);
+                updateConfig(currentConfigVersion, currentConfigVersion + 1);
                 return false;
             }
         }
@@ -174,28 +180,8 @@ public class ConfigManager {
         if (!jsonConfiguration.jsonObject().has("target")) {
             JsonArray jsonArray = new JsonArray();
 
-            {
-                JsonObject worldTarget = new JsonObject();
-                worldTarget.addProperty("type", TargetTypes.WORLD.name());
-                worldTarget.addProperty("ignore", true);
-
-                worldTarget.add("whitelist", new JsonArray());
-                worldTarget.add("blacklist", new JsonArray());
-                jsonArray.add(worldTarget);
-            }
-
-            {
-                JsonObject entityTarget = new JsonObject();
-                entityTarget.addProperty("type", TargetTypes.ENTITY.name());
-                entityTarget.addProperty("ignore", true);
-
-                JsonArray entityTypes = new JsonArray();
-                entityTypes.add(EntityType.CREEPER.name());
-                entityTypes.add(EntityType.TNT.name());
-
-                entityTarget.add("entityTypes", entityTypes);
-                jsonArray.add(entityTarget);
-            }
+            jsonArray.add(createWorldTarget());
+            jsonArray.add(createEntityTarget());
 
             {
                 JsonObject rangeHeight = new JsonObject();
@@ -353,12 +339,59 @@ public class ConfigManager {
 
             jsonConfiguration.saveConfig();
             success = true;
+        } else if(from == 2 && to == 3) {
+            JsonConfiguration jsonConfiguration = JsonConfiguration.loadConfig(configFolder, configFileName);
+            jsonConfiguration.jsonObject().addProperty("configVersion", to);
+
+            JsonArray targets = jsonConfiguration.jsonObject().has("target")
+                    ? jsonConfiguration.jsonObject().getAsJsonArray("target")
+                    : new JsonArray();
+
+            for (int index = targets.size() - 1; index >= 0; index--) {
+                JsonObject target = targets.get(index).getAsJsonObject();
+                if (!target.has("type")) continue;
+
+                String type = target.get("type").getAsString();
+                if (type.equalsIgnoreCase(TargetTypes.WORLD.name())
+                        || type.equalsIgnoreCase(TargetTypes.ENTITY.name())) {
+                    targets.remove(index);
+                }
+            }
+
+            targets.add(createWorldTarget());
+            targets.add(createEntityTarget());
+            jsonConfiguration.jsonObject().add("target", targets);
+            jsonConfiguration.saveConfig();
+            success = true;
         }
 
         if(success) {
             Bukkit.getConsoleSender().sendMessage(CreeperPlugin.instance().messageManager().getMessage(MessageManager.Message.PREFIX) + "§7Config updated from version §b" + from + " §7to §3" + to + "§8.");
         }
 
+    }
+
+    private JsonObject createWorldTarget() {
+        JsonObject worldTarget = new JsonObject();
+        worldTarget.addProperty("type", TargetTypes.WORLD.name());
+        worldTarget.addProperty("ignore", false);
+
+        JsonArray whitelist = new JsonArray();
+        DEFAULT_WORLD_WHITELIST.forEach(whitelist::add);
+        worldTarget.add("whitelist", whitelist);
+        worldTarget.add("blacklist", new JsonArray());
+        return worldTarget;
+    }
+
+    private JsonObject createEntityTarget() {
+        JsonObject entityTarget = new JsonObject();
+        entityTarget.addProperty("type", TargetTypes.ENTITY.name());
+        entityTarget.addProperty("ignore", false);
+
+        JsonArray entityTypes = new JsonArray();
+        entityTypes.add(EntityType.CREEPER.name());
+        entityTarget.add("entityTypes", entityTypes);
+        return entityTarget;
     }
 
 }

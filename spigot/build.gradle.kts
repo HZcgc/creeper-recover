@@ -30,13 +30,13 @@
 
 plugins {
     id("java")
-    id("com.gradleup.shadow") version "9.0.0-beta4"
+    id("com.gradleup.shadow") version "9.6.1"
 }
 
 repositories {
     mavenCentral()
 
-    maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
+    maven("https://repo.papermc.io/repository/maven-public/")
 }
 
 dependencies {
@@ -44,7 +44,7 @@ dependencies {
     implementation("org.bstats:bstats-bukkit:" + findProperty("bstats_version"))
     implementation("org.jetbrains:annotations:" + findProperty("jetbrains_annotations_version"))
 
-    compileOnly("org.spigotmc:spigot-api:" + findProperty("spigot_version"))
+    compileOnly("io.papermc.paper:paper-api:" + findProperty("paper_version"))
 
     compileOnly("org.projectlombok:lombok:" + findProperty("lombok_version"))
     annotationProcessor("org.projectlombok:lombok:" + findProperty("lombok_version"))
@@ -52,7 +52,7 @@ dependencies {
 
 tasks.jar {
     archiveBaseName.set(findProperty("archives_base_name").toString())
-    archiveClassifier.set(project.name)
+    archiveClassifier.set("${project.name}-plain")
 }
 
 tasks.shadowJar {

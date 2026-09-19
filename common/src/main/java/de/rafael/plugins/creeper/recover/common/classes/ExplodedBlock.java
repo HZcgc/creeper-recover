@@ -88,6 +88,16 @@ public class ExplodedBlock {
     public void recoverBasics() {
         CreeperPlugin.instance().explosionManager().freeBlock(this.location);
         Block block = this.location.getBlock();
+
+        // Do not overwrite a solid block a player placed while the crater was
+        // waiting to be restored. Fluids and fire may safely be replaced.
+        if (!block.isEmpty()
+                && !block.isLiquid()
+                && block.getType() != Material.FIRE
+                && block.getType() != Material.SOUL_FIRE) {
+            return;
+        }
+
         block.setType(this.material, false);
         block.setBlockData(this.data, false);
 

@@ -30,7 +30,7 @@
 
 plugins {
     id("java")
-    id("com.gradleup.shadow") version "9.0.0-beta4"
+    id("com.gradleup.shadow") version "9.6.1"
 }
 
 repositories {
@@ -52,7 +52,7 @@ dependencies {
 
 tasks.jar {
     archiveBaseName.set(findProperty("archives_base_name").toString())
-    archiveClassifier.set(project.name)
+    archiveClassifier.set("${project.name}-plain")
 }
 
 tasks.shadowJar {

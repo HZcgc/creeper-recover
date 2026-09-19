@@ -54,13 +54,19 @@ public class ExplosionManager {
     private final List<Location> suppressedLocations = new ArrayList<>();
     private final List<Explosion> explosionList = new ArrayList<>();
 
-    public void handle(Explosion explosion) {
+    public synchronized void handle(Explosion explosion) {
         this.explosionList.add(explosion);
         explosion.blocks().forEach(explodedBlock -> this.suppressBlock(explodedBlock.location()));
         List<Explosion> explosions = Collections.singletonList(explosion);
         CreeperPlugin.scheduler().runAsyncAtFixedRate(cancel -> {
             recoverBlocks(explosions, false, 1);
-            if (explosion.isFinished()) cancel.run();
+            if (explosion.isFinished()) {
+                synchronized (ExplosionManager.this) {
+                    explosionList.remove(explosion);
+                }
+                explosion.finished();
+                cancel.run();
+            }
         }, CreeperPlugin.instance().configManager().recoverDelay(), CreeperPlugin.instance().configManager().recoverSpeed(), TimeUnit.MILLISECONDS);
     }
 

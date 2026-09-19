@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [ 21 ]
+        java: [ 25 ]
       fail-fast: true
     steps:
       - uses: actions/checkout@v4
@@ -16,14 +16,14 @@ jobs:
           distribution: "temurin"
       - name: Run chmod to make gradlew executable
         run: chmod +x ./gradlew
-      - name: Build
-        uses: gradle/gradle-build-action@v3
-        with:
-          arguments: build
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Build jars
+        run: ./gradlew clean build
       - name: Upload Jars
         uses: actions/upload-artifact@v4
         with:
           name: jars
           path: |
-            folia/build/libs/*.jar
-            spigot/build/libs/*.jar
+            folia/build/libs/*-folia.jar
+            spigot/build/libs/*-spigot.jar

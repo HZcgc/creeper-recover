@@ -44,12 +44,15 @@ import de.rafael.plugins.creeper.recover.common.classes.list.BlockList;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityExplodeEvent;
 
+import java.util.ArrayList;
+
 public class EntityExplodeListener implements Listener {
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void on(EntityExplodeEvent event) {
         if (!CreeperPlugin.instance().configManager().enabled()) return;
 
@@ -59,10 +62,12 @@ public class EntityExplodeListener implements Listener {
         }
 
         if (CreeperPlugin.instance().configManager().usePlugin(event)) {
-            var blocks = new BlockList(event.blockList());
+            var blocks = new BlockList(new ArrayList<>(event.blockList()));
 
-            // Disable damage by explosion
-            event.setYield(100);
+            // Creeper damage is applied manually after taking a snapshot. Clearing the
+            // event list prevents normal drops and avoids item duplication on restore.
+            event.setYield(0.0F);
+            event.blockList().clear();
             blocks.removeIf(block -> CreeperPlugin.instance().configManager().blockBlacklist().contains(block.getType()));
 
             // Store blocks

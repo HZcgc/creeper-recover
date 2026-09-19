@@ -1,5 +1,19 @@
 # CreeperRecover
-Recovers all destroyed blocks by Creeper or other Entities
+Recovers blocks destroyed by Creepers. This fork targets Paper 26.2 and is
+preconfigured for the Towny Reborn Earth worlds.
+
+## Towny Reborn defaults
+
+- Paper 26.2 / Java 25
+- automatic recovery without player chat messages
+- Creeper explosions only
+- enabled only in `earth`, `earth_nether` and `earth_the_end`
+- five-second delay before recovery starts
+- no explosion block drops, preventing duplicate items
+- solid blocks placed during the delay are not overwritten
+
+Place `creeper-recover-1.2.0-spigot.jar` in `plugins/` and restart the server. The
+plugin creates `plugins/CreeperRecover/config.json` automatically.
 
 # Images
 ![Example 1](https://i.postimg.cc/vHJMc4Qj/2021-12-31-17-53-38.gif)
@@ -11,30 +25,34 @@ Recovers all destroyed blocks by Creeper or other Entities
 # Config
 ```
 {
-  "configVersion": 2,
+  "configVersion": 3,
   "plugin": {
-    "bStats": true,
-    "ignoreUpdates": false
+    "enabled": true,
+    "bStats": false,
+    "ignoreUpdates": true
   },
   "recover": {
-    "recoverSpeed": 3,
-    "recoverDelay": 100,
-    "blockRecoverSound": "BLOCK_ROOTED_DIRT_PLACE",
+    "recoverSpeed": 150,
+    "recoverDelay": 5000,
+    "blockRecoverSound": "BLOCK.ROOTED_DIRT.PLACE",
     "blockBlacklist": []
   },
   "target": [
     {
       "type": "WORLD",
-      "ignore": true,
-      "whitelist": [],
+      "ignore": false,
+      "whitelist": [
+        "earth",
+        "earth_nether",
+        "earth_the_end"
+      ],
       "blacklist": []
     },
     {
       "type": "ENTITY",
-      "ignore": true,
+      "ignore": false,
       "entityTypes": [
-        "CREEPER",
-        "TNT"
+        "CREEPER"
       ]
     },
     {
@@ -54,7 +72,7 @@ Recovers all destroyed blocks by Creeper or other Entities
 ## Options
 ```
 configVersion: Is set to the current config version.
-bStats: Whether bStats is enabled or disabled. To support me please leave it active.
+bStats: Whether anonymous bStats telemetry is enabled. It is disabled by default in this fork.
 ignoreUpdates: If you don't want to receive a message in the console when the plugin has a update.
 recoverSpeed: The time in milliseconds between each block that is being recovered.
 recoverDelay: The time in milliseconds to wait before starting the recovery
